@@ -1,0 +1,150 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "50aedd6c67e3535d10ff87d7e9040226",
+    "entities": [
+      {
+        "tableName": "medicamentos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `indicacion` TEXT NOT NULL, `horas` TEXT, `cadaMinutos` INTEGER, `primeraMs` INTEGER, `margenMinutos` INTEGER NOT NULL, `desdeMs` INTEGER NOT NULL, `activo` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indicacion",
+            "columnName": "indicacion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "horas",
+            "columnName": "horas",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cadaMinutos",
+            "columnName": "cadaMinutos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "primeraMs",
+            "columnName": "primeraMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "margenMinutos",
+            "columnName": "margenMinutos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "desdeMs",
+            "columnName": "desdeMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activo",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "tomas",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`medicamentoId` INTEGER NOT NULL, `programadaMs` INTEGER NOT NULL, `estado` TEXT NOT NULL, `tomadaEnMs` INTEGER, `silenciadaEnMs` INTEGER, `pospuestaHastaMs` INTEGER, `posposiciones` INTEGER NOT NULL, `ultimoAvisoMs` INTEGER, `avisoHijo` TEXT NOT NULL, PRIMARY KEY(`medicamentoId`, `programadaMs`))",
+        "fields": [
+          {
+            "fieldPath": "medicamentoId",
+            "columnName": "medicamentoId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "programadaMs",
+            "columnName": "programadaMs",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estado",
+            "columnName": "estado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tomadaEnMs",
+            "columnName": "tomadaEnMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "silenciadaEnMs",
+            "columnName": "silenciadaEnMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "pospuestaHastaMs",
+            "columnName": "pospuestaHastaMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "posposiciones",
+            "columnName": "posposiciones",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ultimoAvisoMs",
+            "columnName": "ultimoAvisoMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "avisoHijo",
+            "columnName": "avisoHijo",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "medicamentoId",
+            "programadaMs"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tomas_programadaMs",
+            "unique": false,
+            "columnNames": [
+              "programadaMs"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tomas_programadaMs` ON `${TABLE_NAME}` (`programadaMs`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '50aedd6c67e3535d10ff87d7e9040226')"
+    ]
+  }
+}

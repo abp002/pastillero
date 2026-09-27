@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose pinta todo; esto solo evita el parpadeo de la ventana al arrancar. -->
+    <style name="Tema" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/fondo</item>
+    </style>
+
+    <color name="fondo">#FFFDF8F1</color>
+    <color name="icono_fondo">#FF1F6F5C</color>
+</resources>

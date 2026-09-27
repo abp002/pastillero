@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cápsula en diagonal: icono pequeño de las notificaciones (solo cuenta la silueta). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4.22,19.78C2.26,17.83 2.26,14.66 4.22,12.71L12.71,4.22C14.66,2.26 17.83,2.26 19.78,4.22C21.74,6.17 21.74,9.34 19.78,11.29L11.29,19.78C9.34,21.74 6.17,21.74 4.22,19.78ZM5.64,14.12C4.46,15.29 4.46,17.19 5.64,18.36C6.81,19.54 8.71,19.54 9.88,18.36L12.71,15.54L8.46,11.29Z" />
+</vector>
