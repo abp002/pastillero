@@ -51,7 +51,7 @@ dentro=$("$herramientas/aapt2" dump badging "$apk" | sed -n "s/.*versionName='\(
 mkdir -p build
 cp "$apk" "build/pastillero-$version.apk"
 
-echo "→ Publicando v$version…"
+echo "→ Publicando v${version}…"
 if [ "$version" != "$actual" ]; then
   git commit -q -am "Versión $version: $notas"
   subido=0
