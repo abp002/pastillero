@@ -2,6 +2,7 @@ package es.abpdev.pastillero.dominio
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class VistaDelDiaTest {
 
@@ -61,6 +62,24 @@ class VistaDelDiaTest {
             ),
             botones(sim, t(21, 2)),
         )
+    }
+
+    @Test
+    fun `ALE-244 - recien dada de alta no se ofrece marcar la de manana`() {
+        // Alta a las 18:30 de una pastilla de las 9:00: la primera es mañana y hoy no hay nada que marcar.
+        val sim = Simulador(listOf(metformina("09:00", desde = t(18, 30))))
+        sim.revisar(t(18, 30))
+
+        assertEquals(listOf("Metformina 09:00 NINGUNO"), botones(sim, t(18, 30)))
+        assertIs<Resultado.NoPermitido>(Operaciones.adelantar(sim.medicamentos.single(), null, t(18, 30), ZONA))
+    }
+
+    @Test
+    fun `ALE-244 - recien dada de alta si se ofrece la de hoy`() {
+        val sim = Simulador(listOf(tension(desde = t(12))))
+        sim.revisar(t(12))
+
+        assertEquals(listOf("Tensión 21:00 ADELANTAR"), botones(sim, t(12)))
     }
 
     @Test

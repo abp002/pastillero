@@ -80,12 +80,13 @@ object Operaciones {
     /**
      * Si la siguiente toma se puede marcar ya: si es de hoy, o si ya pasó la mitad del camino
      * desde la anterior. Así, recién tomada la de la noche, no se ofrece marcar la de mañana.
+     * Sin ninguna anterior (recién dada de alta), solo la de hoy (ALE-244).
      */
     fun puedeAdelantar(med: Medicamento, ultima: Toma?, ahora: Instant, zona: ZoneId): Boolean {
-        if (ultima == null) return true
         val siguiente = Calendario.siguiente(med, ultima, zona)
-        return ahora >= Calendario.cierre(med, ultima, zona) ||
-            siguiente.atZone(zona).toLocalDate() == ahora.atZone(zona).toLocalDate()
+        val deHoy = siguiente.atZone(zona).toLocalDate() == ahora.atZone(zona).toLocalDate()
+        if (ultima == null) return deHoy
+        return deHoy || ahora >= Calendario.cierre(med, ultima, zona)
     }
 
     /** Si hay que preguntar «¿Seguro?» antes de marcarla: está antes del margen. */
