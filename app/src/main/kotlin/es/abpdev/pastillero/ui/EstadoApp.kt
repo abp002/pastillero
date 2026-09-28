@@ -9,12 +9,14 @@ import es.abpdev.pastillero.Contenedor
 import es.abpdev.pastillero.PastilleroApp
 import es.abpdev.pastillero.datos.AjustesApp
 import es.abpdev.pastillero.dominio.Boton
+import es.abpdev.pastillero.dominio.Confirmacion
+import es.abpdev.pastillero.dominio.Confirmaciones
 import es.abpdev.pastillero.dominio.Fila
+import es.abpdev.pastillero.dominio.Gesto
 import es.abpdev.pastillero.dominio.Medicamento
 import es.abpdev.pastillero.dominio.MensajesHijo
 import es.abpdev.pastillero.dominio.Operaciones
 import es.abpdev.pastillero.dominio.Resultado
-import es.abpdev.pastillero.dominio.Textos
 import es.abpdev.pastillero.dominio.Toma
 import es.abpdev.pastillero.dominio.VistaDelDia
 import es.abpdev.pastillero.ntfy.NtfyCliente
@@ -96,20 +98,24 @@ class EstadoApp(private val c: Contenedor) : ViewModel() {
     fun pideConfirmacion(fila: Fila): Boolean =
         fila.boton == Boton.ADELANTAR && Operaciones.pideConfirmacion(fila.medicamento, fila.programada, c.reloj.ahora())
 
-    fun tomar(fila: Fila) = viewModelScope.launch {
+    private val confirmacionFlujo = MutableStateFlow<Confirmacion?>(null)
+
+    /** Lo que ha pasado al pulsar, para enseñarlo en grande. */
+    val confirmacion: StateFlow<Confirmacion?> = confirmacionFlujo.asStateFlow()
+
+    fun cerrarConfirmacion() {
+        confirmacionFlujo.value = null
+    }
+
+    /** Un botón de la pantalla principal: la que suena, la silenciada o la siguiente antes de hora. */
+    fun pulsar(fila: Fila, gesto: Gesto) = viewModelScope.launch {
         val toma = fila.toma
-        val resultado = if (fila.boton == Boton.TOMADA && toma != null) {
-            c.revisor.marcarTomada(toma.clave)
-        } else {
-            c.revisor.adelantar(fila.medicamento.id)
+        val resultado = when {
+            toma != null && fila.boton == Boton.TOMADA -> c.revisor.pulsar(gesto, toma.clave)
+            gesto == Gesto.TOMADA -> c.revisor.adelantar(fila.medicamento.id)
+            else -> Resultado.NoPermitido("Esa toma todavía no ha llegado")
         }
-        avisos.emit(
-            when (resultado) {
-                is Resultado.Hecho -> "Apuntado: ${fila.medicamento.nombre} a las ${Textos.hora(c.reloj.ahora(), c.zona())}"
-                is Resultado.YaTomada -> "Ya la marcaste a las ${Textos.hora(resultado.tomadaEn, c.zona())}"
-                is Resultado.NoPermitido -> resultado.motivo
-            },
-        )
+        confirmacionFlujo.value = Confirmaciones.de(gesto, resultado, fila.medicamento.nombre, c.zona())
     }
 
     fun guardarMedicamento(med: Medicamento) = viewModelScope.launch {
@@ -137,7 +143,14 @@ class EstadoApp(private val c: Contenedor) : ViewModel() {
         avisos.emit(texto)
     }
 
-    fun probarAlarma() = c.notificador.probar()
+    /** A los 10 s, para que dé tiempo a bloquear el móvil y verla como la verá él. */
+    fun probarAlarma() {
+        avisos.tryEmit("Sonará en 10 segundos. Bloquea el móvil para verla como la verá él.")
+        c.ambito.launch {
+            delay(10_000)
+            c.notificador.probar()
+        }
+    }
 
     companion object {
         val Factory = viewModelFactory {

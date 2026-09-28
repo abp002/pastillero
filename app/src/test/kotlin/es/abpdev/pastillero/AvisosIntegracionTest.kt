@@ -2,7 +2,9 @@ package es.abpdev.pastillero
 
 import es.abpdev.pastillero.dominio.ClaveToma
 import es.abpdev.pastillero.dominio.Estado
+import es.abpdev.pastillero.dominio.Gesto
 import es.abpdev.pastillero.dominio.Resultado
+import es.abpdev.pastillero.sistema.Enlaces
 import es.abpdev.pastillero.sistema.Notificador
 import es.abpdev.pastillero.ui.AlarmaActivity
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +12,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
+import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -20,30 +23,33 @@ import kotlin.test.assertNull
 class AvisosIntegracionTest : BaseIntegracion() {
 
     @Test
-    fun `criterio 1 - a su hora publica el aviso con sus tres botones y deja la alarma a los 5 min`() {
+    fun `criterio 1 - a su hora suena la alarma a pantalla completa desde el primer aviso`() {
+        // Primera prueba real: un solo sonido, el de «Probar la alarma», y la pastilla en grande.
         val id = guardar(metformina())
 
         revisarA(t(21))
 
-        val aviso = assertNotNull(notificacion(ClaveToma(id, t(21))))
-        assertEquals(Notificador.CANAL_AVISOS, aviso.channelId)
-        assertEquals(listOf("Tomada", "Posponer 10 min", "Silenciar"), aviso.actions.map { it.title.toString() })
-        assertNull(aviso.fullScreenIntent)
+        val alarma = assertNotNull(notificacion(ClaveToma(id, t(21))))
+        assertEquals(Notificador.CANAL_ALARMA, alarma.channelId)
+        assertEquals(AlarmaActivity::class.java.name, shadowOf(assertNotNull(alarma.fullScreenIntent)).savedIntent.component?.className)
         assertEquals(t(21, 5), proximaAlarma())
         assertEquals(1, shadowOf(alarmas).scheduledAlarms.size, "Una sola alarma programada")
     }
 
     @Test
-    fun `criterio 1 - desde los 15 min suena por el canal de alarma y a pantalla completa`() {
+    fun `criterio 2 - tocar la notificacion o sus botones abre la pantalla de la pastilla con el gesto y la toma`() {
         val id = guardar(metformina())
+        val clave = ClaveToma(id, t(21))
+
         revisarA(t(21))
 
-        revisarA(t(21, 15))
-
-        val alarma = assertNotNull(notificacion(ClaveToma(id, t(21))))
-        assertEquals(Notificador.CANAL_ALARMA, alarma.channelId)
-        val pantalla = shadowOf(assertNotNull(alarma.fullScreenIntent)).savedIntent
-        assertEquals(AlarmaActivity::class.java.name, pantalla.component?.className)
+        val alarma = assertNotNull(notificacion(clave))
+        assertEquals(AlarmaActivity::class.java.name, shadowOf(alarma.contentIntent).savedIntent.component?.className)
+        assertEquals(listOf("Ya me la tomé", "En 10 min", "Dejar de sonar"), alarma.actions.map { it.title.toString() })
+        val botones = alarma.actions.map { shadowOf(it.actionIntent).savedIntent }
+        assertEquals(List(3) { AlarmaActivity::class.java.name }, botones.map { it.component?.className })
+        assertEquals(Gesto.entries.map(Enlaces::accion), botones.map { it.action })
+        assertEquals(List(3) { Enlaces.uri(clave) }, botones.map { it.data })
     }
 
     @Test
@@ -92,8 +98,9 @@ class AvisosIntegracionTest : BaseIntegracion() {
         revisarA(t(21))
         reloj.ahora = t(21, 3)
 
-        val tomadaTension = assertNotNull(notificacion(ClaveToma(tensionId, t(21)))).actions.first { it.title == "Tomada" }
-        entregar(shadowOf(tomadaTension.actionIntent).savedIntent)
+        val tomadaTension = assertNotNull(notificacion(ClaveToma(tensionId, t(21)))).actions.first { it.title == "Ya me la tomé" }
+        Robolectric.buildActivity(AlarmaActivity::class.java, shadowOf(tomadaTension.actionIntent).savedIntent).setup()
+        runBlocking { c.esperarTrabajos() }
 
         runBlocking {
             assertEquals(Estado.TOMADA, c.repositorio.toma(ClaveToma(tensionId, t(21)))?.estado)
@@ -116,6 +123,6 @@ class AvisosIntegracionTest : BaseIntegracion() {
 
         revisarA(t(21, 22))
 
-        assertEquals(listOf("Tomada", "Silenciar"), assertNotNull(notificacion(clave)).actions.map { it.title.toString() })
+        assertEquals(listOf("Ya me la tomé", "Dejar de sonar"), assertNotNull(notificacion(clave)).actions.map { it.title.toString() })
     }
 }

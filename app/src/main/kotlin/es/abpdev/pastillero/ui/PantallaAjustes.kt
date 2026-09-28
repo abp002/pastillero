@@ -81,16 +81,15 @@ fun PantallaAjustes(estado: EstadoApp, arreglar: (Permiso) -> Unit, editar: (Lon
                 Numero("Repetir el aviso cada", a.intervaloAvisos.toMinutes(), 1L..30L, "min") { v ->
                     estado.cambiarAjustes { it.copy(avisos = it.avisos.copy(intervaloAvisos = Duration.ofMinutes(v))) }
                 }
-                Numero("Alarma a pantalla completa desde", a.alarmaTras.toMinutes(), 0L..120L, "min") { v ->
-                    estado.cambiarAjustes { it.copy(avisos = it.avisos.copy(alarmaTras = Duration.ofMinutes(v))) }
-                }
-                Numero("Posponer", a.posponer.toMinutes(), 1L..60L, "min") { v ->
+                Numero("«Recuérdamelo» vuelve a sonar a los", a.posponer.toMinutes(), 1L..60L, "min") { v ->
                     estado.cambiarAjustes { it.copy(avisos = it.avisos.copy(posponer = Duration.ofMinutes(v))) }
                 }
-                Numero("Veces que puede posponer", a.maxPosposiciones.toLong(), 0L..5L, "") { v ->
+                Numero("Veces que puede pedir «Recuérdamelo»", a.maxPosposiciones.toLong(), 0L..5L, "") { v ->
                     estado.cambiarAjustes { it.copy(avisos = it.avisos.copy(maxPosposiciones = v.toInt())) }
                 }
-                OutlinedButton(onClick = estado::probarAlarma, modifier = Modifier.fillMaxWidth()) { Text("Probar la alarma") }
+                OutlinedButton(onClick = estado::probarAlarma, modifier = Modifier.fillMaxWidth()) {
+                    Text("Probar la alarma (lo mismo que verá a su hora)")
+                }
             }
 
             Seccion("Avisarte a ti") {

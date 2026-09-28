@@ -17,11 +17,11 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import es.abpdev.pastillero.R
 import es.abpdev.pastillero.dominio.ClaveToma
+import es.abpdev.pastillero.dominio.Gesto
 import es.abpdev.pastillero.dominio.Medicamento
 import es.abpdev.pastillero.dominio.Nivel
 import es.abpdev.pastillero.dominio.Textos
 import es.abpdev.pastillero.ui.AlarmaActivity
-import es.abpdev.pastillero.ui.MainActivity
 import java.time.Duration
 import java.time.ZoneId
 
@@ -67,7 +67,7 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
             .setSmallIcon(R.drawable.ic_pastilla)
             .setContentTitle("${med.nombre} · $hora")
             .setContentText(indicacion)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$indicacion\nCuando te la tomes, pulsa «Tomada»."))
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$indicacion\nToca aquí para verla en grande."))
             .setCategory(if (alarma) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_REMINDER)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -75,10 +75,10 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
             .setAutoCancel(false)
             .setWhen(clave.programada.toEpochMilli())
             .setShowWhen(true)
-            .setContentIntent(abrirApp())
-            .addAction(0, "Tomada", accion(AccionReceiver.TOMADA, clave))
-        if (puedePosponer) constructor.addAction(0, "Posponer ${posponer.toMinutes()} min", accion(AccionReceiver.POSPONER, clave))
-        constructor.addAction(0, "Silenciar", accion(AccionReceiver.SILENCIAR, clave))
+            .setContentIntent(pantallaAlarma(prueba = false))
+            .addAction(0, "Ya me la tomé", pulsacion(Gesto.TOMADA, clave))
+        if (puedePosponer) constructor.addAction(0, "En ${posponer.toMinutes()} min", pulsacion(Gesto.POSPONER, clave))
+        constructor.addAction(0, "Dejar de sonar", pulsacion(Gesto.SILENCIAR, clave))
         if (alarma) constructor.setFullScreenIntent(pantallaAlarma(prueba = false), true)
         publicar(etiqueta(clave), constructor.build())
     }
@@ -127,21 +127,14 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
         if (permitido) NotificationManagerCompat.from(context).notify(etiqueta, ID, notificacion)
     }
 
-    /**
-     * Cada toma lleva su propia URI: sin ella, los PendingIntent de dos tomas con la misma
-     * acción serían «iguales» para Android y el segundo pisaría los extras del primero.
-     */
-    private fun accion(accion: String, clave: ClaveToma): PendingIntent = PendingIntent.getBroadcast(
+    /** Un botón de la notificación abre la pantalla de la pastilla, que hace el gesto y lo confirma en grande. */
+    private fun pulsacion(gesto: Gesto, clave: ClaveToma): PendingIntent = PendingIntent.getActivity(
         context,
         0,
-        Intent(context, AccionReceiver::class.java).setAction(accion).setData(AccionReceiver.uri(clave)),
-        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-    )
-
-    private fun abrirApp(): PendingIntent = PendingIntent.getActivity(
-        context,
-        0,
-        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        Intent(context, AlarmaActivity::class.java)
+            .setAction(Enlaces.accion(gesto))
+            .setData(Enlaces.uri(clave))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 

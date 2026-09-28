@@ -55,7 +55,8 @@ class Preferencias(context: Context) {
         return AjustesApp(
             avisos = Ajustes(
                 intervaloAvisos = minutos(INTERVALO, defecto.intervaloAvisos),
-                alarmaTras = minutos(ALARMA_TRAS, defecto.alarmaTras),
+                // Un solo sonido desde el primer aviso: el de la alarma, a pantalla completa.
+                alarmaTras = Duration.ZERO,
                 posponer = minutos(POSPONER, defecto.posponer),
                 maxPosposiciones = prefs.getInt(MAX_POSPOSICIONES, defecto.maxPosposiciones),
                 avisoHijoTras = minutos(HIJO_TRAS, defecto.avisoHijoTras),
@@ -70,7 +71,6 @@ class Preferencias(context: Context) {
 
     private fun escribir(a: AjustesApp) = prefs.edit(commit = true) {
         putLong(INTERVALO, a.avisos.intervaloAvisos.toMinutes())
-        putLong(ALARMA_TRAS, a.avisos.alarmaTras.toMinutes())
         putLong(POSPONER, a.avisos.posponer.toMinutes())
         putInt(MAX_POSPOSICIONES, a.avisos.maxPosposiciones)
         putLong(HIJO_TRAS, a.avisos.avisoHijoTras.toMinutes())
@@ -86,7 +86,6 @@ class Preferencias(context: Context) {
 
     companion object {
         private const val INTERVALO = "intervaloAvisos"
-        private const val ALARMA_TRAS = "alarmaTras"
         private const val POSPONER = "posponer"
         private const val MAX_POSPOSICIONES = "maxPosposiciones"
         private const val HIJO_TRAS = "avisoHijoTras"

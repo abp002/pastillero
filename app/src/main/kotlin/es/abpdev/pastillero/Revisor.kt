@@ -5,6 +5,7 @@ import es.abpdev.pastillero.datos.Repositorio
 import es.abpdev.pastillero.dominio.Accion
 import es.abpdev.pastillero.dominio.AvisoHijo
 import es.abpdev.pastillero.dominio.ClaveToma
+import es.abpdev.pastillero.dominio.Gesto
 import es.abpdev.pastillero.dominio.Medicamento
 import es.abpdev.pastillero.dominio.MensajesHijo
 import es.abpdev.pastillero.dominio.Operaciones
@@ -51,6 +52,13 @@ class Revisor(
 
     suspend fun posponer(clave: ClaveToma): Resultado = operar { ahora, ajustes ->
         repositorio.toma(clave)?.let { Operaciones.posponer(it, ahora, ajustes.avisos) }
+    }
+
+    /** Lo que se pulsa sobre una toma que suena, venga de la notificación o de la pantalla. */
+    suspend fun pulsar(gesto: Gesto, clave: ClaveToma): Resultado = when (gesto) {
+        Gesto.TOMADA -> marcarTomada(clave)
+        Gesto.POSPONER -> posponer(clave)
+        Gesto.SILENCIAR -> silenciar(clave)
     }
 
     suspend fun adelantar(medicamentoId: Long): Resultado = operar { ahora, _ ->

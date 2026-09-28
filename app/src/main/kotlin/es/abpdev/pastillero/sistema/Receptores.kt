@@ -5,13 +5,9 @@ import android.app.AlarmManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import androidx.core.net.toUri
 import es.abpdev.pastillero.Contenedor
 import es.abpdev.pastillero.contenedor
-import es.abpdev.pastillero.dominio.ClaveToma
 import kotlinx.coroutines.launch
-import java.time.Instant
 
 /** Salta la alarma programada: toca revisar. */
 class AlarmaReceiver : BroadcastReceiver() {
@@ -34,37 +30,6 @@ class ArranqueReceiver : BroadcastReceiver() {
             Intent.ACTION_TIMEZONE_CHANGED,
             AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED,
         )
-    }
-}
-
-/** Los botones de la notificación: Tomada, Posponer y Silenciar. */
-class AccionReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val clave = intent.data?.let(::clave) ?: return
-        enSegundoPlano(context) {
-            when (intent.action) {
-                TOMADA -> it.revisor.marcarTomada(clave)
-                POSPONER -> it.revisor.posponer(clave)
-                SILENCIAR -> it.revisor.silenciar(clave)
-            }
-        }
-    }
-
-    companion object {
-        const val TOMADA = "es.abpdev.pastillero.TOMADA"
-        const val POSPONER = "es.abpdev.pastillero.POSPONER"
-        const val SILENCIAR = "es.abpdev.pastillero.SILENCIAR"
-
-        fun uri(clave: ClaveToma): Uri =
-            "pastillero://toma/${clave.medicamentoId}/${clave.programada.toEpochMilli()}".toUri()
-
-        fun clave(uri: Uri): ClaveToma? {
-            val partes = uri.pathSegments
-            if (uri.scheme != "pastillero" || uri.host != "toma" || partes.size != 2) return null
-            val medicamento = partes[0].toLongOrNull() ?: return null
-            val programada = partes[1].toLongOrNull() ?: return null
-            return ClaveToma(medicamento, Instant.ofEpochMilli(programada))
-        }
     }
 }
 

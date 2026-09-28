@@ -19,7 +19,14 @@ enum class Boton {
  *
  * @property toma null cuando todavía no ha llegado su hora y nadie la ha marcado.
  */
-data class Fila(val medicamento: Medicamento, val programada: Instant, val toma: Toma?, val boton: Boton)
+data class Fila(
+    val medicamento: Medicamento,
+    val programada: Instant,
+    val toma: Toma?,
+    val boton: Boton,
+    /** Está sonando ahora: ni pospuesta, ni silenciada, ni por llegar. */
+    val sonando: Boolean = false,
+)
 
 object VistaDelDia {
     /**
@@ -40,7 +47,9 @@ object VistaDelDia {
                 hayAbierta = hayAbierta || abierta
                 val visible = abierta || toma == ultimaPasada || toma.programada > ahora ||
                     toma.programada.atZone(zona).toLocalDate() == hoy
-                if (visible) filas += Fila(med, toma.programada, toma, if (abierta) Boton.TOMADA else Boton.NINGUNO)
+                val sonando = abierta && toma.estado == Estado.PENDIENTE && toma.programada <= ahora &&
+                    (toma.pospuestaHasta?.let { it <= ahora } ?: true)
+                if (visible) filas += Fila(med, toma.programada, toma, if (abierta) Boton.TOMADA else Boton.NINGUNO, sonando)
             }
             // Si ya adelantó la siguiente, esa es la siguiente: no se enseña otra detrás.
             if (ultima == null || ultima.programada <= ahora) {

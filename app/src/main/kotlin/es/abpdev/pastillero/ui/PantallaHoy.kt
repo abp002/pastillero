@@ -35,12 +35,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.abpdev.pastillero.dominio.Boton
+import es.abpdev.pastillero.dominio.Confirmacion
 import es.abpdev.pastillero.dominio.Estado
 import es.abpdev.pastillero.dominio.Fila
+import es.abpdev.pastillero.dominio.Gesto
 import es.abpdev.pastillero.dominio.Textos
 import es.abpdev.pastillero.sistema.Permiso
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 
@@ -48,6 +52,8 @@ import java.time.ZoneId
 fun PantallaHoy(estado: EstadoApp, arreglar: (Permiso) -> Unit, irA: (Pantalla) -> Unit) {
     val hoy by estado.hoy.collectAsStateWithLifecycle()
     val faltan by estado.faltan.collectAsStateWithLifecycle()
+    val ajustes by estado.ajustes.collectAsStateWithLifecycle()
+    val confirmacion by estado.confirmacion.collectAsStateWithLifecycle()
     var confirmar by remember { mutableStateOf<Fila?>(null) }
     val barra = remember { SnackbarHostState() }
     LaunchedEffect(Unit) { estado.mensajes.collect { barra.showSnackbar(it) } }
@@ -80,9 +86,20 @@ fun PantallaHoy(estado: EstadoApp, arreglar: (Permiso) -> Unit, irA: (Pantalla) 
                 }
             }
             if (actual != null) {
-                items(actual.filas, key = { "${it.medicamento.id}-${it.programada.toEpochMilli()}" }) { fila ->
+                // Lo que suena ahora va arriba y con sus tres opciones: es lo único que importa en ese momento.
+                val (sonando, resto) = actual.filas.partition { it.sonando }
+                items(sonando, key = { "sonando-${it.medicamento.id}-${it.programada.toEpochMilli()}" }) { fila ->
+                    TarjetaSonando(
+                        nombre = fila.medicamento.nombre,
+                        detalle = listOf(Formato.diaYHora(fila.programada, actual.ahora, actual.zona), fila.medicamento.indicacion)
+                            .filter { it.isNotBlank() }.joinToString(" · "),
+                        puedePosponer = (fila.toma?.posposiciones ?: 0) < ajustes.avisos.maxPosposiciones,
+                        minutosPosponer = ajustes.avisos.posponer.toMinutes(),
+                    ) { gesto -> estado.pulsar(fila, gesto) }
+                }
+                items(resto, key = { "${it.medicamento.id}-${it.programada.toEpochMilli()}" }) { fila ->
                     TarjetaToma(fila, actual.ahora, actual.zona) {
-                        if (estado.pideConfirmacion(fila)) confirmar = fila else estado.tomar(fila)
+                        if (estado.pideConfirmacion(fila)) confirmar = fila else estado.pulsar(fila, Gesto.TOMADA)
                     }
                 }
             }
@@ -94,6 +111,8 @@ fun PantallaHoy(estado: EstadoApp, arreglar: (Permiso) -> Unit, irA: (Pantalla) 
             }
         }
     }
+
+    ConfirmacionGrande(confirmacion, estado::cerrarConfirmacion)
 
     confirmar?.let { fila ->
         val zona = hoy?.zona ?: ZoneId.systemDefault()
@@ -109,13 +128,24 @@ fun PantallaHoy(estado: EstadoApp, arreglar: (Permiso) -> Unit, irA: (Pantalla) 
             },
             confirmButton = {
                 Button(onClick = {
-                    estado.tomar(fila)
+                    estado.pulsar(fila, Gesto.TOMADA)
                     confirmar = null
                 }) { Text("Sí, ya me la he tomado") }
             },
             dismissButton = { TextButton(onClick = { confirmar = null }) { Text("No") } },
         )
     }
+}
+
+@Composable
+private fun ConfirmacionGrande(confirmacion: Confirmacion?, cerrar: () -> Unit) {
+    if (confirmacion == null) return
+    // Se va sola a los pocos segundos; «Vale» la quita antes.
+    LaunchedEffect(confirmacion) {
+        delay(5_000)
+        cerrar()
+    }
+    Dialog(onDismissRequest = cerrar) { PanelConfirmacion(confirmacion, cerrar) }
 }
 
 @Composable
@@ -139,7 +169,7 @@ private fun TarjetaToma(fila: Fila, ahora: Instant, zona: ZoneId, tomar: () -> U
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(Modifier.height(6.dp))
-            Text(textoEstado(fila, zona), style = MaterialTheme.typography.titleMedium, color = tinta, fontWeight = FontWeight.SemiBold)
+            Text(textoEstado(fila, ahora, zona), style = MaterialTheme.typography.titleMedium, color = tinta, fontWeight = FontWeight.SemiBold)
             when (fila.boton) {
                 Boton.TOMADA -> {
                     Spacer(Modifier.height(14.dp))
@@ -161,10 +191,15 @@ private fun TarjetaToma(fila: Fila, ahora: Instant, zona: ZoneId, tomar: () -> U
     }
 }
 
-private fun textoEstado(fila: Fila, zona: ZoneId): String {
+private fun textoEstado(fila: Fila, ahora: Instant, zona: ZoneId): String {
     val toma = fila.toma ?: return "Próxima"
+    val pospuesta = toma.pospuestaHasta?.takeIf { it > ahora }
     return when (toma.estado) {
-        Estado.PENDIENTE -> if (fila.boton == Boton.TOMADA) "Te toca ahora" else "Sin marcar"
+        Estado.PENDIENTE -> when {
+            pospuesta != null -> "Te lo recuerdo a las ${Textos.hora(pospuesta, zona)}"
+            fila.boton == Boton.TOMADA -> "Te toca ahora"
+            else -> "Sin marcar"
+        }
         Estado.SILENCIADA -> if (fila.boton == Boton.TOMADA) "Silenciada. ¿Te la has tomado?" else Textos.estado(toma, fila.medicamento.margen, zona)
         Estado.TOMADA -> "✓ " + Textos.estado(toma, fila.medicamento.margen, zona)
         Estado.NO_TOMADA -> "✗ " + Textos.estado(toma, fila.medicamento.margen, zona).replaceFirstChar { it.uppercase() }

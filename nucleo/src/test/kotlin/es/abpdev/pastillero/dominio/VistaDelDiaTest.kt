@@ -82,6 +82,26 @@ class VistaDelDiaTest {
         assertEquals(listOf("Tensión 21:00 ADELANTAR"), botones(sim, t(12)))
     }
 
+    private fun sonando(sim: Simulador, ahora: java.time.Instant) =
+        VistaDelDia.filas(ahora, sim.medicamentos, sim.tomas.values.toList(), ZONA)
+            .filter { it.sonando }.map { "${it.medicamento.nombre} ${hhmm(it.programada)}" }
+
+    @Test
+    fun `sonando es la que toca ahora, no la pospuesta ni la silenciada ni la siguiente`() {
+        val sim = Simulador(listOf(metformina(), tension()))
+        sim.revisar(t(20))
+        sim.avanzarHasta(t(21, 1))
+
+        assertEquals(listOf("Metformina 21:00", "Tensión 21:00"), sonando(sim, t(21, 1)))
+
+        sim.pulsarPosponer(ClaveToma(1, t(21)), t(21, 2))
+        sim.pulsarSilenciar(ClaveToma(2, t(21)), t(21, 2))
+        assertEquals(emptyList(), sonando(sim, t(21, 3)), "Pospuesta y silenciada no suenan")
+
+        sim.avanzarHasta(t(21, 12))
+        assertEquals(listOf("Metformina 21:00"), sonando(sim, t(21, 12)), "Acabada la posposición, vuelve a sonar")
+    }
+
     @Test
     fun `una silenciada de anoche sigue con boton hasta su cierre`() {
         val sim = Simulador(listOf(tension(desde = ayer(8))))

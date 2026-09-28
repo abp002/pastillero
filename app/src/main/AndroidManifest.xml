@@ -56,10 +56,6 @@
             android:exported="false" />
 
         <receiver
-            android:name=".sistema.AccionReceiver"
-            android:exported="false" />
-
-        <receiver
             android:name=".sistema.InstalacionReceiver"
             android:exported="false" />
 
