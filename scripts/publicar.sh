@@ -1,6 +1,6 @@
 #!/bin/bash
 # Publica una versión: verifica, sube el número, compila el APK firmado y crea la release en GitHub.
-# Obtainium, en el móvil donde está instalada, la ve y la instala sola.
+# La app, en el móvil donde está instalada, la ve y se instala sola (ALE-243).
 #
 #   scripts/publicar.sh 0.1.1 "Qué cambia, en una línea"
 #
@@ -59,4 +59,4 @@ fi
 git tag -a "v$version" -m "$notas"
 git push -q origin main "v$version"
 gh release create "v$version" "build/pastillero-$version.apk" --title "$version" --notes "$notas"
-echo "✓ Publicada. Obtainium la instalará en su próxima comprobación."
+echo "✓ Publicada. La app la instalará sola en su próxima comprobación (cada 6 h, o con «Buscar actualización»)."
