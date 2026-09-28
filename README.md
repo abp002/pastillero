@@ -12,18 +12,19 @@ confirma la toma** y, si no lo hace, **avisa a un familiar** por [ntfy](https://
 - Sigue funcionando tras reiniciar el móvil, con el cambio de hora y con el ahorro de batería. Si falta un
   permiso, la pantalla principal dice cuál y lleva al ajuste.
 - Letra grande, una pantalla, ajustes tras PIN. Todo se queda en el móvil: sin cuentas ni servidores.
+- **Se actualiza sola** desde las releases de este repo, sin que quien la usa tenga que hacer nada.
 
 ## Instalar
 
 Necesita Android 8 o superior.
 
-Con [Obtainium](https://github.com/ImranR98/Obtainium), que además la mantiene actualizada sola:
-[añadir Pastillero a Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/abp002/pastillero)
-(o, dentro de Obtainium, «Añadir app» → `https://github.com/abp002/pastillero`).
+Descarga el APK de la [última versión](https://github.com/abp002/pastillero/releases/latest) e instálalo.
+Desde ese momento la app mira cada pocas horas si hay una versión nueva y la instala ella misma.
+Con Android 12 o superior no pregunta nada; en versiones anteriores deja una notificación para
+tocar «Actualizar». Android solo acepta actualizaciones firmadas con la misma clave.
 
-También puedes descargar el APK de la [última versión](https://github.com/abp002/pastillero/releases/latest).
-
-Al abrirla por primera vez, sigue el recuadro rojo hasta que desaparezca. En Android 14 o superior,
+Al abrirla por primera vez, sigue el recuadro rojo hasta que desaparezca (incluido el permiso de
+«instalar actualizaciones»). En Android 14 o superior,
 si el ajuste de «pantalla completa» ya sale activado, apágalo y vuelve a encenderlo: en algunos
 móviles el valor por defecto se ve activado pero no funciona.
 

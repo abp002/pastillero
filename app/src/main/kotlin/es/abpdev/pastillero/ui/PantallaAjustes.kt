@@ -125,6 +125,14 @@ fun PantallaAjustes(estado: EstadoApp, arreglar: (Permiso) -> Unit, editar: (Lon
                 OutlinedButton(onClick = estado::enviarPrueba, modifier = Modifier.fillMaxWidth()) { Text("Enviar un aviso de prueba") }
             }
 
+            Seccion("Versión") {
+                val version = remember { contexto.packageManager.getPackageInfo(contexto.packageName, 0).versionName.orEmpty() }
+                Text("Mis pastillas $version. Se actualiza sola cuando publicas una versión nueva.", style = MaterialTheme.typography.bodyLarge)
+                OutlinedButton(onClick = estado::buscarActualizacion, modifier = Modifier.fillMaxWidth()) {
+                    Text("Buscar actualización ahora")
+                }
+            }
+
             Seccion("PIN de los ajustes") {
                 Text(
                     if (ajustes.pinHash == null) "Sin PIN: cualquiera puede cambiar las horas." else "Con PIN.",

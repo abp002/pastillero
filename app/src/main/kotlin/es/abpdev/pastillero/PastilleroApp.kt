@@ -2,9 +2,11 @@ package es.abpdev.pastillero
 
 import android.app.Application
 import android.content.Context
+import es.abpdev.pastillero.actualizacion.ClienteGithub
 import es.abpdev.pastillero.datos.BaseDeDatos
 import es.abpdev.pastillero.datos.Preferencias
 import es.abpdev.pastillero.datos.Repositorio
+import es.abpdev.pastillero.sistema.Autoactualizacion
 import es.abpdev.pastillero.sistema.ColaAvisosHijo
 import es.abpdev.pastillero.sistema.Despertador
 import es.abpdev.pastillero.sistema.Notificador
@@ -36,12 +38,14 @@ class Contenedor(
     bd: BaseDeDatos = BaseDeDatos.abrir(context),
     val reloj: Reloj = Reloj { Instant.now() },
     val zona: () -> ZoneId = { ZoneId.systemDefault() },
+    val github: ClienteGithub = ClienteGithub(Autoactualizacion.REPO, agente = "Pastillero"),
 ) {
     val ambito = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val preferencias = Preferencias(context)
     val repositorio = Repositorio(bd, preferencias)
     val notificador = Notificador(context, zona)
     val permisos = Permisos(context)
+    val autoactualizacion = Autoactualizacion(context)
     val revisor = Revisor(repositorio, notificador, Despertador(context), ColaAvisosHijo(context), reloj, zona)
 
     /** Espera a que terminen los trabajos que lanzaron los receptores. */

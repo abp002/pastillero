@@ -35,6 +35,16 @@ class ArranqueIntegracionTest : BaseIntegracion() {
     }
 
     @Test
+    fun `ALE-243 criterio 5 - tras actualizarse la app queda programada la alarma`() {
+        guardar(metformina())
+        reloj.ahora = t(20)
+
+        entregar(Intent(Intent.ACTION_MY_PACKAGE_REPLACED).setClass(app, ArranqueReceiver::class.java))
+
+        assertEquals(t(21), proximaAlarma())
+    }
+
+    @Test
     fun `criterio 7 - al cambiar la hora del movil se reprograma`() {
         guardar(metformina().copy(desde = t(12))) // alta a mediodía: la de las 9:00 no existe
         reloj.ahora = t(12)

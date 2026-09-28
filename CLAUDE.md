@@ -52,8 +52,11 @@ de la contraseña.
 `scripts/publicar.sh X.Y.Z "qué cambia"`: exige árbol limpio, rama main, `gh` en abp002, `tipos` y
 `test` en verde. Después sube `pastilleroVersion` en `gradle.properties` (el versionCode se calcula
 de ahí), compila el APK firmado, comprueba firma y versión, hace commit, tag y push, y crea la release
-en GitHub con el APK. En el móvil la instala **Obtainium**, que sigue las releases del repo y actualiza
-en segundo plano (Android 12 o superior, si fue él quien la instaló).
+en GitHub con el APK. En el móvil, la propia app se actualiza sola (ALE-243): `ActualizacionWorker`
+mira cada 6 h la última release (`ClienteGithub`) y la instala con `PackageInstaller`. Sin preguntar en
+Android 12+ (autoactualización con `UPDATE_PACKAGES_WITHOUT_USER_ACTION`); antes, con notificación.
+No instala con una toma sonando ni a menos de 15 min de la siguiente, porque actualizar reinicia la app.
+Tras actualizar, `MY_PACKAGE_REPLACED` reprograma la alarma. «Buscar actualización ahora» está en Ajustes.
 Si un cambio toca la BD (entidades de Room), hay que subir la versión de `BaseDeDatos` y escribir la
 migración: el esquema exportado está en `app/schemas/`. Sin migración, la actualización rompe la app o
 borra el historial.

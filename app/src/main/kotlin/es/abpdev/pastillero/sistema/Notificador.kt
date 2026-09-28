@@ -52,7 +52,11 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
             setBypassDnd(true)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
-        context.getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(avisos, alarma))
+        val actualizaciones = NotificationChannel(CANAL_ACTUALIZACIONES, "Actualizaciones", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            description = "Solo si el móvil pide confirmar una versión nueva de la app."
+        }
+        context.getSystemService(NotificationManager::class.java)
+            .createNotificationChannels(listOf(avisos, alarma, actualizaciones))
     }
 
     fun sonar(med: Medicamento, clave: ClaveToma, nivel: Nivel, puedePosponer: Boolean, posponer: Duration) {
@@ -98,6 +102,24 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
 
     fun retirarPrueba() = NotificationManagerCompat.from(context).cancel(ETIQUETA_PRUEBA, ID)
 
+    /** En Android anterior a 12 la actualización necesita un toque: se le deja aquí. */
+    fun avisarActualizacion(confirmar: Intent) {
+        val abrir = PendingIntent.getActivity(
+            context,
+            3,
+            confirmar.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val notificacion = NotificationCompat.Builder(context, CANAL_ACTUALIZACIONES)
+            .setSmallIcon(R.drawable.ic_pastilla)
+            .setContentTitle("Hay una versión nueva de Mis pastillas")
+            .setContentText("Toca aquí y después «Actualizar».")
+            .setAutoCancel(true)
+            .setContentIntent(abrir)
+            .build()
+        publicar(ETIQUETA_ACTUALIZACION, notificacion)
+    }
+
     private fun publicar(etiqueta: String, notificacion: Notification) {
         // Sin permiso no se puede; la pantalla principal lo enseña en rojo (criterio 8).
         val permitido = Build.VERSION.SDK_INT < 33 ||
@@ -142,6 +164,8 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
     companion object {
         const val CANAL_AVISOS = "avisos"
         const val CANAL_ALARMA = "alarma_v1"
+        const val CANAL_ACTUALIZACIONES = "actualizaciones"
+        const val ETIQUETA_ACTUALIZACION = "actualizacion"
         private const val ETIQUETA_PRUEBA = "prueba"
         private const val ID = 1
 

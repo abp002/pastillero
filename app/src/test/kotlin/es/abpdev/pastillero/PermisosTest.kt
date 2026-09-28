@@ -24,6 +24,7 @@ class PermisosTest : BaseIntegracion() {
     fun todoConcedido() {
         shadowOf(app.getSystemService(PowerManager::class.java)).setIgnoringBatteryOptimizations(app.packageName, true)
         modoPantallaCompleta(AppOpsManager.MODE_ALLOWED)
+        shadowOf(app.packageManager).setCanRequestPackageInstalls(true)
     }
 
     private fun modoPantallaCompleta(modo: Int) = shadowOf(app.getSystemService(AppOpsManager::class.java))
@@ -85,6 +86,13 @@ class PermisosTest : BaseIntegracion() {
     }
 
     @Test
+    fun `ALE-243 criterio 6 - sin permiso para instalar actualizaciones lo dice`() {
+        shadowOf(app.packageManager).setCanRequestPackageInstalls(false)
+
+        assertEquals(listOf(Permiso.ACTUALIZAR), permisos.faltan())
+    }
+
+    @Test
     fun `criterio 8 - cada permiso lleva a su ajuste`() {
         assertEquals(
             listOf(
@@ -92,6 +100,7 @@ class PermisosTest : BaseIntegracion() {
                 Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                 Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
                 Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
             ),
             Permiso.entries.map { permisos.ajuste(it).action },
         )

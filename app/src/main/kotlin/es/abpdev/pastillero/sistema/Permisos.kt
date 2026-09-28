@@ -21,6 +21,7 @@ enum class Permiso(val titulo: String, val porQue: String) {
         "Para que la alarma se vea con el móvil bloqueado. Si ya sale activado, apágalo y vuelve a encenderlo.",
     ),
     BATERIA("Batería sin restricciones", "Para que el ahorro de batería no la duerma."),
+    ACTUALIZAR("Instalar actualizaciones", "Para que se actualice sola, sin que tengas que hacer nada."),
 }
 
 /**
@@ -45,6 +46,7 @@ class Permisos(
         if (!context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)) {
             add(Permiso.BATERIA)
         }
+        if (!context.packageManager.canRequestPackageInstalls()) add(Permiso.ACTUALIZAR)
     }
 
     /**
@@ -60,6 +62,7 @@ class Permisos(
             Permiso.ALARMAS_EXACTAS -> Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, paquete)
             Permiso.PANTALLA_COMPLETA -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, paquete)
             Permiso.BATERIA -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, paquete)
+            Permiso.ACTUALIZAR -> Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, paquete)
         }
         return intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }

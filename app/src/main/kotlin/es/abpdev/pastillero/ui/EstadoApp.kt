@@ -81,7 +81,13 @@ class EstadoApp(private val c: Contenedor) : ViewModel() {
 
     fun alVolver() {
         faltanFlujo.value = c.permisos.faltan()
+        c.autoactualizacion.programar()
         viewModelScope.launch { c.revisor.revisar() }
+    }
+
+    fun buscarActualizacion() {
+        c.autoactualizacion.buscarYa()
+        avisos.tryEmit("Buscando. Si hay una versión nueva, se instalará sola en un momento.")
     }
 
     fun ajustePara(permiso: Permiso) = c.permisos.ajuste(permiso)
