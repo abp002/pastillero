@@ -44,12 +44,18 @@ object Operaciones {
 
     fun posponer(toma: Toma, ahora: Instant, ajustes: Ajustes): Resultado = when (toma.estado) {
         Estado.TOMADA -> Resultado.YaTomada(toma.tomadaEn!!)
-        Estado.NO_TOMADA, Estado.SILENCIADA -> Resultado.NoPermitido("Ya no está sonando")
-        Estado.PENDIENTE -> when {
+        Estado.NO_TOMADA -> Resultado.NoPermitido("Esa toma ya se cerró")
+        // Silenciada, «Recuérdamelo» la vuelve a poner a sonar dentro de N minutos.
+        Estado.PENDIENTE, Estado.SILENCIADA -> when {
             ahora < toma.programada -> Resultado.NoPermitido("Todavía no es su hora")
             toma.posposiciones >= ajustes.maxPosposiciones -> Resultado.NoPermitido("Ya no se puede posponer más")
             else -> Resultado.Hecho(
-                toma.copy(pospuestaHasta = ahora.plus(ajustes.posponer), posposiciones = toma.posposiciones + 1),
+                toma.copy(
+                    estado = Estado.PENDIENTE,
+                    silenciadaEn = null,
+                    pospuestaHasta = ahora.plus(ajustes.posponer),
+                    posposiciones = toma.posposiciones + 1,
+                ),
                 listOf(Accion.Retirar(toma.clave)),
             )
         }
@@ -87,6 +93,16 @@ object Operaciones {
         val deHoy = siguiente.atZone(zona).toLocalDate() == ahora.atZone(zona).toLocalDate()
         if (ultima == null) return deHoy
         return deHoy || ahora >= Calendario.cierre(med, ultima, zona)
+    }
+
+    /**
+     * Lo que se ofrece sobre una toma abierta, suene o no: silenciada o pospuesta sigue pudiendo
+     * marcarse, pedir que se la recuerde (mientras queden posposiciones) o dejar de sonar.
+     */
+    fun opciones(toma: Toma, ahora: Instant, ajustes: Ajustes): Set<Gesto> = when {
+        !toma.abierta || ahora < toma.programada -> emptySet()
+        toma.posposiciones >= ajustes.maxPosposiciones -> setOf(Gesto.TOMADA, Gesto.SILENCIAR)
+        else -> setOf(Gesto.TOMADA, Gesto.POSPONER, Gesto.SILENCIAR)
     }
 
     /** Si hay que preguntar «¿Seguro?» antes de marcarla: está antes del margen. */

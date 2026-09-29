@@ -20,6 +20,10 @@ enum class Permiso(val titulo: String, val porQue: String) {
         "Pantalla completa",
         "Para que la alarma se vea con el móvil bloqueado. Si ya sale activado, apágalo y vuelve a encenderlo.",
     ),
+    SUPERPONER(
+        "Mostrar sobre otras apps",
+        "Para que la pastilla salga en grande aunque esté usando el móvil, y no solo como una notificación.",
+    ),
     BATERIA("Batería sin restricciones", "Para que el ahorro de batería no la duerma."),
     ACTUALIZAR("Instalar actualizaciones", "Para que se actualice sola, sin que tengas que hacer nada."),
 }
@@ -43,6 +47,7 @@ class Permisos(
             add(Permiso.ALARMAS_EXACTAS)
         }
         if (Build.VERSION.SDK_INT >= 34 && !pantallaCompletaConcedida()) add(Permiso.PANTALLA_COMPLETA)
+        if (!Settings.canDrawOverlays(context)) add(Permiso.SUPERPONER)
         if (!context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)) {
             add(Permiso.BATERIA)
         }
@@ -61,6 +66,7 @@ class Permisos(
                 Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             Permiso.ALARMAS_EXACTAS -> Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, paquete)
             Permiso.PANTALLA_COMPLETA -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, paquete)
+            Permiso.SUPERPONER -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, paquete)
             Permiso.BATERIA -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, paquete)
             Permiso.ACTUALIZAR -> Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, paquete)
         }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.shadows.ShadowSettings
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
@@ -34,6 +35,27 @@ class AvisosIntegracionTest : BaseIntegracion() {
         assertEquals(AlarmaActivity::class.java.name, shadowOf(assertNotNull(alarma.fullScreenIntent)).savedIntent.component?.className)
         assertEquals(t(21, 5), proximaAlarma())
         assertEquals(1, shadowOf(alarmas).scheduledAlarms.size, "Una sola alarma programada")
+    }
+
+    @Test
+    fun `con permiso para superponerse, a su hora abre la pantalla de la pastilla aunque el movil este en uso`() {
+        // Primera prueba real: desbloqueado, la pantalla completa se queda en una notificación como la de un WhatsApp.
+        ShadowSettings.setCanDrawOverlays(true)
+        guardar(metformina())
+
+        revisarA(t(21))
+
+        assertEquals(AlarmaActivity::class.java.name, shadowOf(app).nextStartedActivity?.component?.className)
+    }
+
+    @Test
+    fun `sin permiso para superponerse no intenta abrirla (Android lo bloquearia)`() {
+        ShadowSettings.setCanDrawOverlays(false)
+        guardar(metformina())
+
+        revisarA(t(21))
+
+        assertNull(shadowOf(app).nextStartedActivity)
     }
 
     @Test

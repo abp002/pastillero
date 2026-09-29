@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -81,6 +82,7 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
         constructor.addAction(0, "Dejar de sonar", pulsacion(Gesto.SILENCIAR, clave))
         if (alarma) constructor.setFullScreenIntent(pantallaAlarma(prueba = false), true)
         publicar(etiqueta(clave), constructor.build())
+        abrirEncima(prueba = false)
     }
 
     fun retirar(clave: ClaveToma) = NotificationManagerCompat.from(context).cancel(etiqueta(clave), ID)
@@ -98,6 +100,21 @@ class Notificador(private val context: Context, private val zona: () -> ZoneId) 
             .setFullScreenIntent(pantallaAlarma(prueba = true), true)
             .build()
         publicar(ETIQUETA_PRUEBA, notificacion)
+        abrirEncima(prueba = true)
+    }
+
+    /**
+     * Con el móvil desbloqueado y en uso, Android convierte la pantalla completa en una notificación
+     * que baja por arriba. Con «Mostrar sobre otras apps» la app puede abrir la pantalla de la pastilla
+     * ella misma, esté el móvil como esté. Sin ese permiso Android lo bloquearía: ni se intenta.
+     */
+    private fun abrirEncima(prueba: Boolean) {
+        if (!Settings.canDrawOverlays(context)) return
+        context.startActivity(
+            Intent(context, AlarmaActivity::class.java)
+                .putExtra(AlarmaActivity.PRUEBA, prueba)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION),
+        )
     }
 
     fun retirarPrueba() = NotificationManagerCompat.from(context).cancel(ETIQUETA_PRUEBA, ID)

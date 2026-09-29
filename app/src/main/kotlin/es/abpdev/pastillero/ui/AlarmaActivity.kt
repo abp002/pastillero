@@ -34,6 +34,7 @@ import es.abpdev.pastillero.dominio.Confirmaciones
 import es.abpdev.pastillero.dominio.Estado
 import es.abpdev.pastillero.dominio.Gesto
 import es.abpdev.pastillero.dominio.Medicamento
+import es.abpdev.pastillero.dominio.Operaciones
 import es.abpdev.pastillero.dominio.Resultado
 import es.abpdev.pastillero.dominio.Textos
 import es.abpdev.pastillero.dominio.Toma
@@ -197,7 +198,7 @@ private fun PantallaAlarma(
             TarjetaSonando(
                 nombre = "Pastilla de prueba",
                 detalle = "Así sonará y se verá a su hora",
-                puedePosponer = true,
+                opciones = Gesto.entries.toSet(),
                 minutosPosponer = ajustes.avisos.posponer.toMinutes(),
                 pulsar = pulsarPrueba,
             )
@@ -206,7 +207,7 @@ private fun PantallaAlarma(
             TarjetaSonando(
                 nombre = med.nombre,
                 detalle = listOf(Textos.hora(toma.programada, c.zona()), med.indicacion).filter { it.isNotBlank() }.joinToString(" · "),
-                puedePosponer = toma.posposiciones < ajustes.avisos.maxPosposiciones,
+                opciones = Operaciones.opciones(toma, ahora, ajustes.avisos),
                 minutosPosponer = ajustes.avisos.posponer.toMinutes(),
                 activa = !pulsando,
             ) { gesto -> pulsar(gesto, toma.clave) }

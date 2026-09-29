@@ -59,15 +59,16 @@ fun Numero(etiqueta: String, valor: Long, rango: LongRange, unidad: String, camb
 }
 
 /**
- * La pastilla que está sonando, con sus tres opciones en grande y una debajo de otra.
+ * Una toma abierta (sonando, silenciada o pospuesta), con sus opciones en grande y una debajo de otra.
  * La misma en la pantalla de alarma, en la principal y en la prueba: lo que ve es siempre igual.
  */
 @Composable
 fun TarjetaSonando(
     nombre: String,
     detalle: String,
-    puedePosponer: Boolean,
+    opciones: Set<Gesto>,
     minutosPosponer: Long,
+    titulo: String = "Te toca ahora",
     activa: Boolean = true,
     pulsar: (Gesto) -> Unit,
 ) {
@@ -77,16 +78,16 @@ fun TarjetaSonando(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Te toca ahora", style = MaterialTheme.typography.titleLarge, color = Colores.ambar, fontWeight = FontWeight.Bold)
+            Text(titulo, style = MaterialTheme.typography.titleLarge, color = Colores.ambar, fontWeight = FontWeight.Bold)
             Text(nombre, style = MaterialTheme.typography.displaySmall)
             if (detalle.isNotBlank()) Text(detalle, style = MaterialTheme.typography.titleLarge)
-            Button(
+            if (Gesto.TOMADA in opciones) Button(
                 onClick = { pulsar(Gesto.TOMADA) },
                 enabled = activa,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 88.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Colores.verde),
             ) { Text("YA ME LA HE TOMADO", style = TextoBotonGrande, textAlign = TextAlign.Center) }
-            if (puedePosponer) {
+            if (Gesto.POSPONER in opciones) {
                 OutlinedButton(
                     onClick = { pulsar(Gesto.POSPONER) },
                     enabled = activa,
@@ -94,7 +95,7 @@ fun TarjetaSonando(
                     border = BorderStroke(2.dp, Colores.ambar),
                 ) { Text("Recuérdamelo en $minutosPosponer min", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center) }
             }
-            OutlinedButton(
+            if (Gesto.SILENCIAR in opciones) OutlinedButton(
                 onClick = { pulsar(Gesto.SILENCIAR) },
                 enabled = activa,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),

@@ -12,6 +12,7 @@ import org.junit.Before
 import org.junit.Test
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowAlarmManager
+import org.robolectric.shadows.ShadowSettings
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -25,6 +26,7 @@ class PermisosTest : BaseIntegracion() {
         shadowOf(app.getSystemService(PowerManager::class.java)).setIgnoringBatteryOptimizations(app.packageName, true)
         modoPantallaCompleta(AppOpsManager.MODE_ALLOWED)
         shadowOf(app.packageManager).setCanRequestPackageInstalls(true)
+        ShadowSettings.setCanDrawOverlays(true)
     }
 
     private fun modoPantallaCompleta(modo: Int) = shadowOf(app.getSystemService(AppOpsManager::class.java))
@@ -93,12 +95,20 @@ class PermisosTest : BaseIntegracion() {
     }
 
     @Test
+    fun `sin permiso para superponerse lo dice`() {
+        ShadowSettings.setCanDrawOverlays(false)
+
+        assertEquals(listOf(Permiso.SUPERPONER), permisos.faltan())
+    }
+
+    @Test
     fun `criterio 8 - cada permiso lleva a su ajuste`() {
         assertEquals(
             listOf(
                 Settings.ACTION_APP_NOTIFICATION_SETTINGS,
                 Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                 Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                 Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
             ),

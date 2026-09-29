@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.abpdev.pastillero.dominio.Boton
+import es.abpdev.pastillero.dominio.Operaciones
 import es.abpdev.pastillero.dominio.Confirmacion
 import es.abpdev.pastillero.dominio.Estado
 import es.abpdev.pastillero.dominio.Fila
@@ -86,15 +87,16 @@ fun PantallaHoy(estado: EstadoApp, arreglar: (Permiso) -> Unit, irA: (Pantalla) 
                 }
             }
             if (actual != null) {
-                // Lo que suena ahora va arriba y con sus tres opciones: es lo único que importa en ese momento.
-                val (sonando, resto) = actual.filas.partition { it.sonando }
-                items(sonando, key = { "sonando-${it.medicamento.id}-${it.programada.toEpochMilli()}" }) { fila ->
+                // Las abiertas van arriba con todas sus opciones, suenen o no: es lo único que importa en ese momento.
+                val (abiertas, resto) = actual.filas.partition { it.boton == Boton.TOMADA && it.toma != null }
+                items(abiertas, key = { "abierta-${it.medicamento.id}-${it.programada.toEpochMilli()}" }) { fila ->
                     TarjetaSonando(
                         nombre = fila.medicamento.nombre,
                         detalle = listOf(Formato.diaYHora(fila.programada, actual.ahora, actual.zona), fila.medicamento.indicacion)
                             .filter { it.isNotBlank() }.joinToString(" · "),
-                        puedePosponer = (fila.toma?.posposiciones ?: 0) < ajustes.avisos.maxPosposiciones,
+                        opciones = Operaciones.opciones(fila.toma!!, actual.ahora, ajustes.avisos),
                         minutosPosponer = ajustes.avisos.posponer.toMinutes(),
+                        titulo = textoEstado(fila, actual.ahora, actual.zona),
                     ) { gesto -> estado.pulsar(fila, gesto) }
                 }
                 items(resto, key = { "${it.medicamento.id}-${it.programada.toEpochMilli()}" }) { fila ->
